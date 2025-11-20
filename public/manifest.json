@@ -1,0 +1,22 @@
+{
+  "name": "Samsung Attendance",
+  "short_name": "SIRC Weekly",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FFFFFF",
+  "description": "Samsung Employee Attendance Tracking App",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
