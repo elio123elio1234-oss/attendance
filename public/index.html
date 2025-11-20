@@ -431,6 +431,7 @@
             border-color: transparent;
             background-clip: padding-box;
             position: relative;
+            border-radius: 0.75rem; /* rounded-xl - 12px */
         }
         .weekly-summary-card::before {
             content: '';
@@ -447,6 +448,7 @@
         .dark .weekly-summary-card {
             background-image: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%); /* darker gradient */
             border-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem; /* rounded-xl - 12px */
         }
         .dark .weekly-summary-card::before {
             background: linear-gradient(to right, 
@@ -1208,21 +1210,23 @@ en sent for approval!</p>
                                      </select>
                             </div>
                             <div class="flex items-end">
-                                <div class="relative inline-block">
-                                    <button id="export-stats-pdf-btn" class="btn btn-primary text-sm py-2 px-4 rounded-lg flex items-center space-x-2 hover:opacity-90 transition">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                        <span id="export-btn-text">Export PDF</span>
-                                        <svg class="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                <div class="bg-gradient-to-r from-pink-500 to-violet-600 px-2 py-1.5 flex items-center gap-2 shadow-md" style="border-radius: 2rem !important; overflow: hidden; -webkit-border-radius: 2rem; -moz-border-radius: 2rem;">
+                                    <button id="prev-month-btn" class="text-white hover:bg-white hover:bg-opacity-20 p-1.5 transition" style="border-radius: 50%;">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
                                         </svg>
                                     </button>
-                                    <div id="month-dropdown" class="hidden absolute right-0 mt-2 w-64 rounded-xl shadow-2xl bg-white border border-gray-200 z-50" style="max-height: 350px; overflow-y: auto;">
-                                        <div class="py-2 px-1" id="month-dropdown-list">
-                                            <!-- Months will be populated here -->
-                                        </div>
-                                    </div>
+                                    <button id="export-stats-pdf-btn" class="text-white hover:bg-white hover:bg-opacity-10 px-3 py-1 transition flex items-center gap-1.5" style="min-width: 180px; justify-content: center; border-radius: 1.5rem;">
+                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <span class="text-sm font-semibold"><span id="export-month-text">November 2025</span> PDF</span>
+                                    </button>
+                                    <button id="next-month-btn" class="text-white hover:bg-white hover:bg-opacity-20 p-1.5 transition" style="border-radius: 50%;">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1742,53 +1746,55 @@ en sent for approval!</p>
         const statsGroupFilter = document.getElementById('stats-group-filter');
         const statsEmployeeFilter = document.getElementById('stats-employee-filter');
 
-        // Populate month dropdown for PDF export
-        const monthDropdownList = document.getElementById('month-dropdown-list');
+        // Month navigation for PDF export
         const now = new Date();
+        let currentExportMonthIndex = 0;
+        const availableMonths = [];
         
+        // Generate 12 months
         for (let i = 0; i < 12; i++) {
             const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const monthValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            const monthText = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-            
-            const item = document.createElement('button');
-            item.className = 'block w-full text-left px-4 py-3 text-sm text-gray-800 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-900 transition-all duration-150 rounded-lg mx-1 my-1 border border-transparent hover:border-indigo-200';
-            item.style.backgroundColor = '#ffffff';
-            item.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span class="font-medium">${monthText}</span>
-                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                </div>
-            `;
-            item.dataset.monthValue = monthValue;
-            item.dataset.monthText = monthText;
-            
-            // Export PDF when clicking a month
-            item.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                document.getElementById('month-dropdown').classList.add('hidden');
-                await exportPDFForMonth(monthValue, monthText);
+            availableMonths.push({
+                value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+                text: date.toLocaleString('en-US', { month: 'long', year: 'numeric' })
             });
-            
-            monthDropdownList.appendChild(item);
         }
         
-        // Toggle dropdown
-        document.getElementById('export-stats-pdf-btn').addEventListener('click', (e) => {
+        // Update the display
+        function updateExportMonthDisplay() {
+            const monthText = document.getElementById('export-month-text');
+            monthText.textContent = availableMonths[currentExportMonthIndex].text;
+            
+            // Disable/enable buttons at boundaries
+            document.getElementById('prev-month-btn').disabled = (currentExportMonthIndex === availableMonths.length - 1);
+            document.getElementById('next-month-btn').disabled = (currentExportMonthIndex === 0);
+        }
+        
+        updateExportMonthDisplay();
+        
+        // Previous month button
+        document.getElementById('prev-month-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            const dropdown = document.getElementById('month-dropdown');
-            dropdown.classList.toggle('hidden');
+            if (currentExportMonthIndex < availableMonths.length - 1) {
+                currentExportMonthIndex++;
+                updateExportMonthDisplay();
+            }
         });
         
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('month-dropdown');
-            const button = document.getElementById('export-stats-pdf-btn');
-            if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-                dropdown.classList.add('hidden');
+        // Next month button
+        document.getElementById('next-month-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentExportMonthIndex > 0) {
+                currentExportMonthIndex--;
+                updateExportMonthDisplay();
             }
+        });
+        
+        // Export button
+        document.getElementById('export-stats-pdf-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const selectedMonth = availableMonths[currentExportMonthIndex];
+            await exportPDFForMonth(selectedMonth.value, selectedMonth.text);
         });
         const removeUserGroupFilter = document.getElementById('remove-user-group-filter');
         const removeUserSelect = document.getElementById('remove-user-select');
