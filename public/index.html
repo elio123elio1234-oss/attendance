@@ -528,17 +528,39 @@
             isolation: isolate;
         }
 
-        thead .sticky-col {
-            background-color: #f9fafb; /* Tailwind's bg-gray-50 */
-            z-index: 30; /* Header sticky column should be above body sticky columns */
+        /* Light Mode - Sticky Header: gray background with dark text */
+        thead th.sticky-col {
+            background-color: #f9fafb !important; /* bg-gray-50 */
+            color: #4b5563 !important; /* text-gray-600 */
+            z-index: 30; /* Header above rows */
         }
 
+        /* Light Mode - ALL headers should have light background */
+        thead th {
+            background-color: #f9fafb !important; /* bg-gray-50 */
+            color: #4b5563 !important; /* text-gray-600 */
+        }
+
+        /* Light Mode - Email column only should be black */
+        tbody tr td:nth-child(2) {
+            color: #111827 !important; /* text-gray-900 - black text for emails */
+        }
+
+        /* Light Mode - Group column should be black */
+        tbody tr td:nth-child(3) {
+            color: #111827 !important; /* text-gray-900 - black text for groups */
+        }
+
+        /* Light Mode - Sticky Rows: white background with dark text */
         tbody tr td.sticky-col {
-            background-color: white;
+            background-color: #ffffff !important;
+            color: #111827 !important; /* text-gray-900 */
         }
 
+        /* Light Mode - TL rows with gray background */
         tbody tr.bg-gray-50 td.sticky-col {
-            background-color: #f9fafb; /* Tailwind's bg-gray-50 */
+            background-color: #f9fafb !important; /* bg-gray-50 */
+            color: #111827 !important; /* text-gray-900 */
         }
         
         /* Ensure table wrapper has proper z-index context */
@@ -824,12 +846,15 @@
         
         .dark thead th {
             background-color: rgb(55, 65, 81) !important; /* Same as TL rows */
+            color: #ffffff !important; /* White text */
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             font-weight: 600 !important; /* Make headers more prominent */
         }
 
-        .dark thead .sticky-col {
-            background-color: rgb(55, 65, 81) !important; /* Same as TL rows */
+        .dark thead th.sticky-col {
+            background-color: rgb(55, 65, 81) !important; /* Match other headers in dark mode */
+            color: #ffffff !important; /* White text */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         /* Regular row styles */
@@ -839,10 +864,16 @@
 
         .dark tbody tr td {
             background-color: #111827 !important;
+            color: #9ca3af !important; /* text-gray-400 */
         }
 
         .dark tbody tr td.sticky-col {
             background-color: #111827 !important;
+            color: #f3f4f6 !important; /* text-gray-100 */
+        }
+
+        .dark tbody tr td.font-medium {
+            color: #f3f4f6 !important; /* text-gray-100 for bold items */
         }
 
         /* TL row styles - using rgb instead of hex for exact color matching */
@@ -3808,7 +3839,7 @@ en sent for approval!</p>
             }
 
             let tableHtml = `
-                <div class="shadow-sm border border-gray-200 rounded-lg overflow-x-auto">
+                <div class="shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto relative" style="isolation: isolate;">
                     <table class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700 min-w-max md:w-full table-auto">
                         <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
