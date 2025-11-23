@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         /* --- [תיקון 3] הסתרת פסי גלילה בכל האפליקציה --- */
 
@@ -1209,25 +1210,31 @@ en sent for approval!</p>
                                 <select id="stats-employee-filter" class="form-input block w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
                                      </select>
                             </div>
-                            <div class="flex items-end">
-                                <div class="bg-gradient-to-r from-pink-500 to-violet-600 px-2 py-1.5 flex items-center gap-2 shadow-md" style="border-radius: 2rem !important; overflow: hidden; -webkit-border-radius: 2rem; -moz-border-radius: 2rem;">
-                                    <button id="prev-month-btn" class="text-white hover:bg-white hover:bg-opacity-20 p-1.5 transition" style="border-radius: 50%;">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                                        </svg>
+                            <div class="flex flex-col sm:flex-row items-center gap-3">
+                                
+                                <div class="flex items-center bg-white dark:bg-gray-800 shadow-sm border border-gray-300 dark:border-gray-600 p-1" style="border-radius: 12px !important;">
+                                    
+                                    <button id="prev-month-btn" class="p-2 rounded-lg hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-gray-700 transition focus:outline-none" style="color: #4b5563 !important;">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
                                     </button>
-                                    <button id="export-stats-pdf-btn" class="text-white hover:bg-white hover:bg-opacity-10 px-3 py-1 transition flex items-center gap-1.5" style="min-width: 180px; justify-content: center; border-radius: 1.5rem;">
-                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                        <span class="text-sm font-semibold"><span id="export-month-text">November 2025</span> PDF</span>
-                                    </button>
-                                    <button id="next-month-btn" class="text-white hover:bg-white hover:bg-opacity-20 p-1.5 transition" style="border-radius: 50%;">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-                                        </svg>
+                                    
+                                    <span id="export-month-text" class="px-2 text-sm font-extrabold min-w-[150px] text-center select-none tracking-wide" style="color: #111827 !important;">
+                                        November 2025
+                                    </span>
+
+                                    <button id="next-month-btn" class="p-2 rounded-lg hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-gray-700 transition focus:outline-none" style="color: #4b5563 !important;">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                                     </button>
                                 </div>
+
+                                <button id="export-stats-pdf-btn" class="group relative flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white text-sm font-bold shadow-md hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden" style="border-radius: 12px !important;">
+                                    <div class="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-700 ease-in-out -translate-x-full skew-x-12"></div>
+                                    <svg class="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    <span class="relative z-10">Export Report</span>
+                                </button>
+
                             </div>
                         </div>
                     </div>
@@ -1763,7 +1770,21 @@ en sent for approval!</p>
         // Update the display
         function updateExportMonthDisplay() {
             const monthText = document.getElementById('export-month-text');
+            const monthContainer = monthText.parentElement;
             monthText.textContent = availableMonths[currentExportMonthIndex].text;
+            
+            // Check if we're on current month (index 0 is current month)
+            const isCurrentMonth = currentExportMonthIndex === 0;
+            
+            if (isCurrentMonth) {
+                // Remove gradient and pulse effects
+                monthContainer.classList.remove('return-to-today-btn', 'animated-gradient-text');
+                monthContainer.style.cursor = 'default';
+            } else {
+                // Add gradient and pulse effects
+                monthContainer.classList.add('return-to-today-btn', 'animated-gradient-text');
+                monthContainer.style.cursor = 'pointer';
+            }
             
             // Disable/enable buttons at boundaries
             document.getElementById('prev-month-btn').disabled = (currentExportMonthIndex === availableMonths.length - 1);
@@ -1771,6 +1792,15 @@ en sent for approval!</p>
         }
         
         updateExportMonthDisplay();
+        
+        // Add click handler to return to current month
+        document.getElementById('export-month-text').parentElement.addEventListener('click', (e) => {
+            // Only respond if we're not on current month
+            if (currentExportMonthIndex !== 0) {
+                currentExportMonthIndex = 0;
+                updateExportMonthDisplay();
+            }
+        });
         
         // Previous month button
         document.getElementById('prev-month-btn').addEventListener('click', (e) => {
@@ -1981,9 +2011,11 @@ en sent for approval!</p>
                 if (currentUserProfile && currentUserProfile.darkMode) {
                     document.documentElement.classList.add('dark');
                     darkModeToggle.checked = true;
+                    updateExportMonthColors(true);
                 } else {
                     document.documentElement.classList.remove('dark');
                     darkModeToggle.checked = false;
+                    updateExportMonthColors(false);
                 }
 
                 setDefaultTab(); // Set the default view on login
@@ -2144,6 +2176,8 @@ en sent for approval!</p>
 
         function refreshViews() {
             if (currentUser) {
+                // Clear cache to force fresh user data on manual refresh
+                allUsersCache = [];
                 setupTeamViewTab();
                 setupUpdateTab(currentUser.uid);
                 setupStatisticsTab();
@@ -2189,6 +2223,13 @@ en sent for approval!</p>
                     tabs[key].classList.add('active');
                     contents[key].classList.remove('hidden');
                     moveActiveIndicator();
+                    
+                    // Scroll the clicked tab into view (centered on mobile)
+                    tabs[key].scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest', 
+                        inline: 'center' 
+                    });
                 });
             }
         });
@@ -2227,6 +2268,10 @@ en sent for approval!</p>
             if (!currentUser) return;
             const isEnabled = darkModeToggle.checked;
             document.documentElement.classList.toggle('dark', isEnabled);
+            
+            // Update export month text and buttons colors for dark mode
+            updateExportMonthColors(isEnabled);
+            
             try {
                 const userRef = doc(db, "users", currentUser.uid);
                 await updateDoc(userRef, { darkMode: isEnabled });
@@ -2236,8 +2281,26 @@ en sent for approval!</p>
                 // Optionally revert the toggle if save fails
                 document.documentElement.classList.toggle('dark', !isEnabled);
                 darkModeToggle.checked = !isEnabled;
+                updateExportMonthColors(!isEnabled);
             }
         });
+
+        // Helper function to update export month colors
+        function updateExportMonthColors(isDark) {
+            const exportMonthText = document.getElementById('export-month-text');
+            const prevBtn = document.getElementById('prev-month-btn');
+            const nextBtn = document.getElementById('next-month-btn');
+            
+            if (exportMonthText) {
+                exportMonthText.style.setProperty('color', isDark ? '#ffffff' : '#111827', 'important');
+            }
+            if (prevBtn) {
+                prevBtn.style.setProperty('color', isDark ? '#d1d5db' : '#4b5563', 'important');
+            }
+            if (nextBtn) {
+                nextBtn.style.setProperty('color', isDark ? '#d1d5db' : '#4b5563', 'important');
+            }
+        }
 
         // --- Groups Logic ---
         async function loadGroups() {
@@ -2754,6 +2817,34 @@ en sent for approval!</p>
             }
         });
         
+        // --- Helper: Cached Users Fetching ---
+        async function getCachedUsers() {
+            // אם כבר יש לנו מידע בזיכרון והוא לא ריק - תחזיר אותו מיד בלי לפנות לשרת
+            if (allUsersCache && allUsersCache.length > 0) {
+                const usersMap = {};
+                allUsersCache.forEach(user => {
+                    usersMap[user.id] = user;
+                });
+                return usersMap;
+            }
+
+            // אם אין בזיכרון, תוריד מהשרת (קורה רק פעם אחת ב-Session)
+            console.log("Fetching users from Firestore..."); // לוג לבדיקה
+            const usersCol = collection(db, "users");
+            const userSnapshot = await getDocs(usersCol);
+            
+            const usersMap = {};
+            allUsersCache = []; // עדכון המשתנה הגלובלי
+
+            userSnapshot.forEach(doc => {
+                const userData = doc.data();
+                usersMap[doc.id] = userData;
+                allUsersCache.push({ id: doc.id, ...userData });
+            });
+
+            return usersMap;
+        }
+        
         // --- Team View Tab Logic ---
         async function setupTeamViewTab() {
             // Cleanup previous listener if exists
@@ -2785,13 +2876,8 @@ en sent for approval!</p>
             }
             
             try {
-                // First, fetch users once
-                const usersCol = collection(db, "users");
-                const userSnapshot = await getDocs(usersCol);
-                const users = {};
-                userSnapshot.forEach(doc => {
-                    users[doc.id] = doc.data();
-                });
+                // Fetch users from cache (saves $$ and reads)
+                const users = await getCachedUsers();
 
                 const weekId = getWeekId(currentDate);
                 
@@ -2979,13 +3065,8 @@ en sent for approval!</p>
             }
 
             try {
-                // Fetch all users once
-                const usersCol = collection(db, "users");
-                const userSnapshot = await getDocs(usersCol);
-                const allUsers = {};
-                userSnapshot.forEach(doc => {
-                    allUsers[doc.id] = doc.data();
-                });
+                // Fetch users from cache (saves $$ and reads)
+                const allUsers = await getCachedUsers();
                 
                 const weekId = getWeekId(currentDate);
                 const mergedGroupName = "DT, DV, FW";
@@ -3728,17 +3809,17 @@ en sent for approval!</p>
 
             let tableHtml = `
                 <div class="shadow-sm border border-gray-200 rounded-lg overflow-x-auto">
-                    <table class="bg-white divide-y divide-gray-200 min-w-max md:w-full table-auto">
-                        <thead class="bg-gray-50">
+                    <table class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700 min-w-max md:w-full table-auto">
+                        <thead class="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">Group</th>
-                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">Role</th>
-                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                <th class="sticky-col py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Group</th>
+                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Role</th>
+                                <th class="py-3 px-2 text-left text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
             `;
 
             filteredUsers.sort((a,b) => (a.fullName || "").localeCompare(b.fullName || "")).forEach(user => {
@@ -3748,10 +3829,10 @@ en sent for approval!</p>
 
                 tableHtml += `
                     <tr>
-                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">${user.fullName}</td>
-                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">${user.email}</td>
-                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm text-gray-500">${user.group}</td>
-                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm font-medium ${user.isSuperAdmin ? 'text-red-600' : (user.isTL ? 'theme-purple-text-dark' : 'text-gray-500')}">${role}</td>
+                        <td class="sticky-col py-3 px-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">${user.fullName}</td>
+                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400">${user.email}</td>
+                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400">${user.group}</td>
+                        <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm font-medium ${user.isSuperAdmin ? 'text-red-600' : (user.isTL ? 'theme-purple-text-dark' : 'text-gray-500 dark:text-gray-400')}">${role}</td>
                         <td class="py-3 px-2 whitespace-nowrap text-xs sm:text-sm">
                             <button class="sa-edit-user-btn theme-link hover:underline font-medium mr-3" data-uid="${user.id}">Edit</button>
                             <button class="sa-delete-user-btn text-red-600 hover:underline font-medium" data-uid="${user.id}" data-name="${user.fullName}">Delete</button>
@@ -4335,12 +4416,139 @@ en sent for approval!</p>
 
                 pdf.save(filename);
 
+                // Wait a bit before downloading Excel to avoid browser blocking
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // --- Export Excel file ---
+                await exportExcelForMonth(monthlyStats, aggregateStats, selectedGroupText, selectedEmployeeText, monthName, currentYear, currentMonth);
+
             } catch (error) {
                 console.error('Error generating PDF:', error);
                 alert('Failed to generate PDF: ' + error.message);
             } finally {
                 button.disabled = false;
                 button.innerHTML = originalText;
+            }
+        }
+
+        // --- Export Statistics to Excel ---
+        async function exportExcelForMonth(monthlyStats, aggregateStats, selectedGroupText, selectedEmployeeText, monthName, currentYear, currentMonth) {
+            try {
+                // Prepare data for Excel
+                const excelData = [];
+                
+                // Add header row
+                excelData.push([
+                    'Employee',
+                    'Group',
+                    'Office',
+                    'Remote',
+                    'Day Off',
+                    'Vacation',
+                    'Sick',
+                    'Half Day Off',
+                    'Business Trip',
+                    'Conference',
+                    'University',
+                    'Reserved Duty',
+                    'Team Event',
+                    'Holiday',
+                    'Not Set',
+                    'Total Work Days',
+                    'Office %'
+                ]);
+
+                // Add employee data rows
+                Object.entries(monthlyStats).forEach(([uid, stats]) => {
+                    const total = stats.totalWorkDays;
+                    const officePercent = total > 0 ? ((stats.office / total) * 100).toFixed(1) : 0;
+                    
+                    excelData.push([
+                        stats.name,
+                        stats.group,
+                        stats.office,
+                        stats.homeFull,
+                        stats.dayOff,
+                        stats.vacation,
+                        stats.sick,
+                        stats.halfDayOff,
+                        stats.businessTrip,
+                        stats.conference,
+                        stats.university,
+                        stats.reservedDuty,
+                        stats.teamEvent,
+                        stats.holiday,
+                        stats.notSet,
+                        total,
+                        officePercent + '%'
+                    ]);
+                });
+
+                // Add summary row
+                const grandTotal = Object.values(monthlyStats).reduce((sum, stats) => sum + stats.totalWorkDays, 0);
+                const avgOfficePercent = grandTotal > 0 ? ((aggregateStats.totalOffice / grandTotal) * 100).toFixed(1) : 0;
+                
+                excelData.push([
+                    'TOTAL',
+                    '',
+                    aggregateStats.totalOffice,
+                    aggregateStats.totalHome,
+                    aggregateStats.totalDayOff,
+                    aggregateStats.totalVacation,
+                    aggregateStats.totalSick,
+                    '',
+                    aggregateStats.totalBusinessTrip,
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    aggregateStats.totalOther,
+                    grandTotal,
+                    avgOfficePercent + '%'
+                ]);
+
+                // Create workbook and worksheet
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+                // Set column widths
+                const colWidths = [
+                    { wch: 20 }, // Employee
+                    { wch: 12 }, // Group
+                    { wch: 8 },  // Office
+                    { wch: 8 },  // Remote
+                    { wch: 10 }, // Day Off
+                    { wch: 10 }, // Vacation
+                    { wch: 8 },  // Sick
+                    { wch: 12 }, // Half Day Off
+                    { wch: 14 }, // Business Trip
+                    { wch: 12 }, // Conference
+                    { wch: 12 }, // University
+                    { wch: 14 }, // Reserved Duty
+                    { wch: 12 }, // Team Event
+                    { wch: 10 }, // Holiday
+                    { wch: 10 }, // Not Set
+                    { wch: 14 }, // Total Work Days
+                    { wch: 10 }  // Office %
+                ];
+                ws['!cols'] = colWidths;
+
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, ws, 'Monthly Statistics');
+
+                // Generate filename
+                const groupName = selectedGroupText.replace(/[^a-z0-9]/gi, '_');
+                const employeeName = selectedEmployeeText.replace(/[^a-z0-9]/gi, '_');
+                const dateStr = `${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`;
+                const excelFilename = `Monthly_Analytics_${groupName}_${employeeName}_${dateStr}.xlsx`;
+
+                // Save Excel file
+                XLSX.writeFile(wb, excelFilename);
+
+            } catch (error) {
+                console.error('Error generating Excel:', error);
+                alert('Failed to generate Excel: ' + error.message);
             }
         }
 
