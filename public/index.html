@@ -426,39 +426,104 @@
         }
 
         .weekly-summary-card {
-            background-image: linear-gradient(135deg, #fff1f2 0%, #faf5ff 100%); /* rose-50 to purple-50 */
-            border-width: 2px;
-            border-style: solid;
-            border-color: transparent;
-            background-clip: padding-box;
+            background-color: #f9fafb; /* gray-50 - same as other statistics cards */
+            border: 1px solid #e5e7eb; /* gray-200 border like other cards */
             position: relative;
             border-radius: 0.75rem; /* rounded-xl - 12px */
         }
-        .weekly-summary-card::before {
-            content: '';
-            position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            z-index: -1;
-            margin: -2px; /* Same as border-width */
-            border-radius: inherit; /* inherit parent's border-radius */
-            background: linear-gradient(to right, #fbcfe8, #a7f3d0, #bfdbfe, #ddd6fe); /* light pink, green, blue, purple */
-            background-size: 300% auto;
-            animation: gradient-border-flow 4s linear infinite;
-        }
         /* Dark mode version */
         .dark .weekly-summary-card {
-            background-image: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.5) 100%); /* darker gradient */
-            border-color: rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem; /* rounded-xl - 12px */
+            background-color: rgba(31, 41, 55, 0.5); /* darker background */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* subtle border in dark mode */
         }
-        .dark .weekly-summary-card::before {
-            background: linear-gradient(to right, 
-                rgba(236, 72, 153, 0.2),  /* pink with lower opacity */
-                rgba(74, 222, 128, 0.2),  /* green with lower opacity */
-                rgba(96, 165, 250, 0.2),  /* blue with lower opacity */
-                rgba(167, 139, 250, 0.2)  /* purple with lower opacity */
-            );
-            opacity: 0.5;
+
+        /* Circular Progress Indicators */
+        .progress-circles-container {
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+            padding: 1rem 0.5rem;
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db transparent; /* gray-300 */
+        }
+        .progress-circles-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .progress-circles-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .progress-circles-container::-webkit-scrollbar-thumb {
+            background: #d1d5db; /* gray-300 */
+            border-radius: 4px;
+        }
+        .progress-circles-container::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; /* gray-400 */
+        }
+        .progress-circle-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .progress-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+        .progress-circle svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        .progress-circle-bg {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 8;
+        }
+        .dark .progress-circle-bg {
+            stroke: #374151;
+        }
+        .progress-circle-fill {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .progress-circle-percentage {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .dark .progress-circle-percentage {
+            color: #f3f4f6;
+        }
+        .progress-circle-label {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4b5563;
+            text-align: center;
+            max-width: 120px;
+            overflow-wrap: break-word;
+        }
+        .dark .progress-circle-label {
+            color: #9ca3af;
+        }
+        .progress-circle-count {
+            margin-top: 0.25rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        .dark .progress-circle-count {
+            color: #9ca3af;
         }
 
         /* --- [NEW] Return to today button styles --- */
@@ -909,6 +974,14 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .dark .weekly-summary-card::before { background: linear-gradient(to right, rgba(236, 72, 153, 0.3), rgba(74, 222, 128, 0.3), rgba(96, 165, 250, 0.3), rgba(167, 139, 250, 0.3)); }
+
+        /* Weekly Summary Title Colors */
+        .weekly-summary-title {
+            color: #000000 !important; /* Black in light mode */
+        }
+        .dark .weekly-summary-title {
+            color: #ffffff !important; /* White in dark mode */
+        }
 
     </style>
 </head>
@@ -1918,6 +1991,9 @@ en sent for approval!</p>
         const passwordChangeSuccessAnimation = document.getElementById('password-change-success-animation');
         const createUserSuccessAnimation = document.getElementById('create-user-success-animation');
 
+        // Track whether Statistics tab has been visited
+        let statisticsTabVisited = false;
+
         // Tabs
         const tabs = {
             profile: document.getElementById('tab-profile'),
@@ -2255,6 +2331,14 @@ en sent for approval!</p>
                     contents[key].classList.remove('hidden');
                     moveActiveIndicator();
                     
+                    // Trigger animation for Statistics tab
+                    if (key === 'statistics') {
+                        statisticsTabVisited = true; // Mark as visited
+                        setTimeout(() => {
+                            animateProgressCircles();
+                        }, 150);
+                    }
+                    
                     // Scroll the clicked tab into view (centered on mobile)
                     tabs[key].scrollIntoView({ 
                         behavior: 'smooth', 
@@ -2264,6 +2348,53 @@ en sent for approval!</p>
                 });
             }
         });
+
+        // Function to animate progress circles in Statistics tab
+        function animateProgressCircles() {
+            const container = document.getElementById('statistics-container');
+            if (!container) return;
+            
+            const circles = container.querySelectorAll('.progress-circle-fill');
+            const percentages = container.querySelectorAll('.progress-circle-percentage');
+            
+            if (circles.length === 0) return;
+            
+            circles.forEach((circle, index) => {
+                const targetOffset = parseFloat(circle.getAttribute('data-target-offset'));
+                const circumference = 2 * Math.PI * 42;
+                const targetPercentage = ((circumference - targetOffset) / circumference * 100).toFixed(1);
+                
+                // Reset to start position first
+                circle.style.strokeDashoffset = circumference;
+                if (percentages[index]) {
+                    percentages[index].textContent = '0%';
+                }
+                
+                // Small delay then animate
+                setTimeout(() => {
+                    // Animate the circle
+                    circle.style.strokeDashoffset = targetOffset;
+                    
+                    // Animate the percentage text
+                    let currentPercentage = 0;
+                    const duration = 1200; // 1.2 seconds
+                    const steps = 60;
+                    const increment = parseFloat(targetPercentage) / steps;
+                    const stepDuration = duration / steps;
+                    
+                    const intervalId = setInterval(() => {
+                        currentPercentage += increment;
+                        if (currentPercentage >= targetPercentage) {
+                            currentPercentage = targetPercentage;
+                            clearInterval(intervalId);
+                        }
+                        if (percentages[index]) {
+                            percentages[index].textContent = Math.round(currentPercentage) + '%';
+                        }
+                    }, stepDuration);
+                }, 50);
+            });
+        }
 
         // --- Event Listener for Group Filter ---
         // New function to handle group filter change and save preference
@@ -3175,32 +3306,70 @@ en sent for approval!</p>
                     
                     container.innerHTML = '';
                     
-                    // [MODIFICATION 3] Render Weekly Summary Card with new class
+                    // [MODIFICATION 3] Render Weekly Summary Card with circular progress indicators
                     const weeklySummaryCard = document.createElement('div');
                     weeklySummaryCard.className = "weekly-summary-card p-6 rounded-lg col-span-full";
-                    let weeklyHtml = '<h3 class="font-bold text-xl text-violet-900 dark:text-violet-200 mb-4">Weekly Summary</h3>';
+                    let weeklyHtml = '<h3 class="weekly-summary-title font-bold text-xl mb-4">Weekly Summary</h3>';
                     const sortedWeekly = Object.keys(weeklyStats).sort((a,b) => weeklyStats[b] - weeklyStats[a]);
                     if(sortedWeekly.length === 0){
-                        weeklyHtml += '<p class="text-sm text-gray-500">No data reported for this week.</p>';
+                        weeklyHtml += '<p class="text-sm text-gray-500 dark:text-gray-400">No data reported for this week.</p>';
                     } else {
+                        weeklyHtml += '<div class="progress-circles-container">';
                         sortedWeekly.forEach(status => {
                             const count = weeklyStats[status];
                             const percentage = ((count / totalSlots) * 100).toFixed(1);
+                            const circumference = 2 * Math.PI * 42; // radius = 42
+                            const offset = circumference - (percentage / 100) * circumference;
+                            
+                            // Get color for this status using existing color mapping
+                            const colorMap = {
+                                'Office': '#10b981', // green-500
+                                'Home-full': '#3b82f6', // blue-500
+                                'Sick': '#ef4444', // red-500
+                                'Day off': '#ef4444', // red-500
+                                'Vacation': '#ef4444', // red-500
+                                'Maternity leave': '#ef4444', // red-500
+                                'Half day off': '#eab308', // yellow-500
+                                'Business trip': '#a855f7', // purple-500
+                                'Conference': '#a855f7', // purple-500
+                                'University': '#a855f7', // purple-500
+                                'Reserved duty': '#6b7280', // gray-500
+                                'Team event': '#6366f1', // indigo-500
+                                'Holiday': '#6366f1' // indigo-500
+                            };
+                            const color = colorMap[status] || '#6366f1';
+                            
                             weeklyHtml += `
-                                <div class="mb-3">
-                                    <div class="flex justify-between mb-1">
-                                        <span class="text-sm font-medium text-gray-700">${status}</span>
-                                        <span class="text-sm font-medium text-gray-500">${percentage}% (${count}/${totalSlots} slots)</span>
+                                <div class="progress-circle-item">
+                                    <div class="progress-circle">
+                                        <svg viewBox="0 0 100 100">
+                                            <circle class="progress-circle-bg" cx="50" cy="50" r="42"></circle>
+                                            <circle class="progress-circle-fill" cx="50" cy="50" r="42"
+                                                stroke="${color}"
+                                                stroke-dasharray="${circumference}"
+                                                stroke-dashoffset="${circumference}"
+                                                data-target-offset="${offset}"></circle>
+                                        </svg>
+                                        <div class="progress-circle-text">
+                                            <div class="progress-circle-percentage">0%</div>
+                                        </div>
                                     </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                        <div class="${getStatusColorClass(status, 'progress')}" style="width: ${percentage}%"></div>
-                                    </div>
+                                    <div class="progress-circle-label">${status}</div>
+                                    <div class="progress-circle-count">${count}/${totalSlots} slots</div>
                                 </div>
                             `;
                         });
+                        weeklyHtml += '</div>';
                     }
                     weeklySummaryCard.innerHTML = weeklyHtml;
                     container.appendChild(weeklySummaryCard);
+
+                    // Trigger animation if Statistics tab has been visited
+                    if (statisticsTabVisited) {
+                        setTimeout(() => {
+                            animateProgressCircles();
+                        }, 100);
+                    }
 
                     // Render Daily Cards
                      const dailyCardsContainer = document.createElement('div');
@@ -3228,10 +3397,10 @@ en sent for approval!</p>
                                     <div class="mb-3">
                                         <div class="flex justify-between mb-1">
                                             <span class="text-sm font-medium text-gray-700">${status}</span>
-                                            <span class="text-sm font-medium text-gray-500">${percentage}% (${count}/${totalUsersInFilter})</span>
+                                            <span class="text-sm font-medium text-gray-500 daily-percentage" data-target="${percentage}">0% (${count}/${totalUsersInFilter})</span>
                                         </div>
                                         <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                            <div class="${getStatusColorClass(status, 'progress')}" style="width: ${percentage}%"></div>
+                                            <div class="${getStatusColorClass(status, 'progress')} daily-progress-bar" style="width: 0%; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);" data-target-width="${percentage}"></div>
                                         </div>
                                     </div>
                                 `;
@@ -3239,7 +3408,7 @@ en sent for approval!</p>
                         }
                         
                         const dayCardHtml = `
-                            <div class="bg-gray-50 p-4 rounded-lg border">
+                            <div class="day-card bg-gray-50 p-4 rounded-lg border">
                                 <h4 class="font-bold text-lg text-gray-800">${dayName}</h4>
                                 <p class="text-sm text-gray-500 mb-4">${dateString}</p>
                                 ${statsHtml}
@@ -3248,6 +3417,11 @@ en sent for approval!</p>
                         dailyCardsContainer.insertAdjacentHTML('beforeend', dayCardHtml);
                     }
                     container.appendChild(dailyCardsContainer);
+                    
+                    // Set up Intersection Observer for daily cards animation (always, not just when visited)
+                    setTimeout(() => {
+                        setupDailyCardsObserver();
+                    }, 150);
                 };
 
                 // Set up realtime listener for attendance changes
@@ -3269,6 +3443,65 @@ en sent for approval!</p>
                  console.error("Error fetching statistics: ", error);
                  container.innerHTML = '<p class="text-red-500 col-span-full">Failed to load statistics.</p>';
             }
+        }
+
+        // Function to set up Intersection Observer for daily statistics cards
+        function setupDailyCardsObserver() {
+            const cards = document.querySelectorAll('.day-card');
+            
+            const observerOptions = {
+                root: null, // viewport
+                rootMargin: '0px',
+                threshold: 0.2 // trigger when 20% of card is visible
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !entry.target.dataset.animated) {
+                        // Mark as animated so it only happens once
+                        entry.target.dataset.animated = 'true';
+                        
+                        // Animate all progress bars in this card
+                        const progressBars = entry.target.querySelectorAll('.daily-progress-bar');
+                        const percentageTexts = entry.target.querySelectorAll('.daily-percentage');
+                        
+                        setTimeout(() => {
+                            progressBars.forEach((bar, index) => {
+                                const targetWidth = parseFloat(bar.getAttribute('data-target-width'));
+                                bar.style.width = targetWidth + '%';
+                                
+                                // Animate percentage text
+                                if (percentageTexts[index]) {
+                                    const targetPercentage = parseFloat(percentageTexts[index].getAttribute('data-target'));
+                                    let currentPercentage = 0;
+                                    const duration = 1200;
+                                    const steps = 60;
+                                    const increment = targetPercentage / steps;
+                                    const stepDuration = duration / steps;
+                                    
+                                    const intervalId = setInterval(() => {
+                                        currentPercentage += increment;
+                                        if (currentPercentage >= targetPercentage) {
+                                            currentPercentage = targetPercentage;
+                                            clearInterval(intervalId);
+                                        }
+                                        // Keep the count text intact
+                                        const fullText = percentageTexts[index].textContent;
+                                        const countPart = fullText.substring(fullText.indexOf('('));
+                                        percentageTexts[index].textContent = currentPercentage.toFixed(1) + '% ' + countPart;
+                                    }, stepDuration);
+                                }
+                            });
+                        }, 100);
+                        
+                        // Stop observing this card
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            
+            // Observe all cards
+            cards.forEach(card => observer.observe(card));
         }
 
 
