@@ -5,6 +5,9 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Samsung Attendance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,6 +28,12 @@
             -webkit-overflow-scrolling: touch;
             overflow-x: hidden !important; /* Prevent horizontal scroll on body */
             max-width: 100vw !important;
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
+        }
+        
+        .dark html, .dark body {
+            background-color: #111827;
         }
         
         /* --- [תיקון 2] הסתרת פסי גלילה בכל האפליקציה (כולל body) --- */
@@ -330,6 +339,11 @@
             font-weight: 700 !important;
         }
 
+        /* Sticky header dark mode */
+        .dark #sticky-header {
+            background-color: #111827;
+        }
+
         /* Share App title colors */
         #share-app-title {
             color: #111827 !important; /* Black in light mode */
@@ -343,6 +357,9 @@
             position: fixed;
             top: 0;
             left: 0;
+            padding-top: env(safe-area-inset-top);
+            background-color: #ffffff;
+            transition: background-color 0.2s ease;
             right: 0;
             z-index: 1000;
             background-color: #ffffff;
@@ -1757,6 +1774,27 @@ en sent for approval!</p>
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Initialize Status Bar on app load
+        (async function initializeStatusBar() {
+            // Set initial white status bar
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', '#ffffff');
+            }
+            
+            // For Capacitor
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+                const { StatusBar } = window.Capacitor.Plugins;
+                try {
+                    await StatusBar.setBackgroundColor({ color: '#ffffff' });
+                    await StatusBar.setStyle({ style: 'DARK' });
+                    await StatusBar.setOverlaysWebView({ overlay: false });
+                } catch (error) {
+                    console.log('StatusBar error:', error);
+                }
+            }
+        })();
+
         // Explicitly set persistence to 'local' to remember the user across browser sessions.
         setPersistence(auth, browserLocalPersistence);
 
@@ -2217,10 +2255,12 @@ en sent for approval!</p>
                     document.documentElement.classList.add('dark');
                     darkModeToggle.checked = true;
                     updateExportMonthColors(true);
+                    updateStatusBar(true);
                 } else {
                     document.documentElement.classList.remove('dark');
                     darkModeToggle.checked = false;
                     updateExportMonthColors(false);
+                    updateStatusBar(false);
                 }
 
                 setDefaultTab(); // Set the default view on login
@@ -2549,11 +2589,35 @@ en sent for approval!</p>
         userSearchInput.addEventListener('input', renderUserManagementList);
         userGroupFilter.addEventListener('change', renderUserManagementList);
 
+        // --- Status Bar Update Function ---
+        function updateStatusBar(isDarkMode) {
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            if (themeColorMeta) {
+                // Set status bar color based on dark mode
+                themeColorMeta.setAttribute('content', isDarkMode ? '#111827' : '#ffffff');
+            }
+            
+            // For Capacitor apps (mobile)
+            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+                const { StatusBar } = window.Capacitor.Plugins;
+                if (isDarkMode) {
+                    StatusBar.setBackgroundColor({ color: '#111827' });
+                    StatusBar.setStyle({ style: 'LIGHT' }); // Light icons on dark background
+                } else {
+                    StatusBar.setBackgroundColor({ color: '#ffffff' });
+                    StatusBar.setStyle({ style: 'DARK' }); // Dark icons on light background
+                }
+            }
+        }
+
         // --- Dark Mode Logic ---
         darkModeToggle.addEventListener('change', async () => {
             if (!currentUser) return;
             const isEnabled = darkModeToggle.checked;
             document.documentElement.classList.toggle('dark', isEnabled);
+            
+            // Update status bar
+            updateStatusBar(isEnabled);
             
             // Update export month text and buttons colors for dark mode
             updateExportMonthColors(isEnabled);
