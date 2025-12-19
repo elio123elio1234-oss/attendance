@@ -1,14 +1,14 @@
 
 <!DOCTYPE html>
-<html lang="en" class="bg-[#111827] min-h-screen">
+<html lang="en" class="bg-white dark:bg-gray-900 min-h-screen">
 <head>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta id="meta-theme-color" name="theme-color" content="#111827">
+    <meta id="meta-theme-color" name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>SIRC Weekly</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -516,9 +516,13 @@
             justify-content: center;
             align-items: center;
             
-            /* התיקון: שינוי לרקע כהה נקי כמו ב-Dark Mode */
-            background-color: #111827 !important; 
-            background-image: none !important;     /* ביטול הגרדיאנטים */
+            /* --- [שינוי] רקע תואם למסך הלוגין --- */
+            background-color: #020617 !important;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(123, 0, 255, 0.15), transparent 25%), 
+                radial-gradient(circle at 85% 30%, rgba(255, 0, 128, 0.15), transparent 25%);
+            background-attachment: fixed;
+            background-size: cover;
             
             /* --- [התיקון כאן] --- */
             /* שיניתי מ-100 ל-9999 כדי שזה יהיה מעל ההדר (שהוא 1000) */
@@ -1261,8 +1265,12 @@
 
 /* 1. הגדרת הרקע הכללי למסך */
 #auth-container {
-    background-color: #111827 !important; /* צבע הרקע של האפליקציה (Gray 900) */
-    background-image: none !important;    /* ביטול הגרדיאנטים */
+    background-color: #020617 !important;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(123, 0, 255, 0.15), transparent 25%), 
+        radial-gradient(circle at 85% 30%, rgba(255, 0, 128, 0.15), transparent 25%);
+    background-attachment: fixed;
+    background-size: cover;
 }
 
 /* 2. ביטול מוחלט של ה"כרטיס" באמצע */
@@ -1705,7 +1713,7 @@
 
     </style>
 </head>
-<body class="min-h-screen bg-[#111827] text-white">
+<body class="min-h-screen bg-[#020617] dark:bg-gray-900">
     <svg width="0" height="0" style="position:absolute; visibility:hidden;">
         <defs>
             <linearGradient id="gradElectricDark" x1="0%" y1="100%" x2="100%" y2="0%">
@@ -4250,7 +4258,7 @@
                     currentDate = getEffectiveCurrentDate(); 
                     tlToolDate = getEffectiveCurrentDate(); 
                     
-                    document.body.classList.remove('bg-[#111827]');
+                    document.body.classList.remove('bg-[#020617]');
                     document.body.classList.add('bg-white');
     
                     if (currentUserProfile && currentUserProfile.darkMode) {
@@ -4331,7 +4339,7 @@
                 // 6. איפוס צבעי רקע
                 document.documentElement.classList.remove('dark'); 
                 document.body.classList.remove('bg-white');
-                document.body.classList.add('bg-[#111827]');
+                document.body.classList.add('bg-[#020617]');
                 updateStatusBar(false, true); 
 
                 // ============================================================
@@ -5010,7 +5018,7 @@
 
             if (isLoginPage) {
                 // צבע מסך ההתחברות (כחול כהה עמוק)
-                colorToSet = '#111827';
+                colorToSet = '#020617';
             } else {
                 // צבע בתוך האפליקציה (בהיר או כהה)
                 colorToSet = isDarkMode ? '#111827' : '#ffffff';
@@ -5025,7 +5033,7 @@
                 const { StatusBar } = window.Capacitor.Plugins;
                 // בתוך Capacitor אנחנו צריכים להתאים גם את צבע האייקונים (Style)
                 if (isLoginPage) {
-                    StatusBar.setBackgroundColor({ color: '#111827' });
+                    StatusBar.setBackgroundColor({ color: '#020617' });
                     StatusBar.setStyle({ style: 'DARK' }); // טקסט לבן על רקע כהה
                 } else if (isDarkMode) {
                     StatusBar.setBackgroundColor({ color: '#111827' });
@@ -7849,31 +7857,11 @@
 
                     groupsToRender.forEach(groupName => {
                         if (!groupedUsers[groupName]) return;
-                        
-                        // --- שינוי: כותרת עם שדה חיפוש ---
+
                         let tableHtml = `
                             <div class="mb-8">
-                                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                                        ${groupName}
-                                        <span class="text-xs font-normal text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                                            ${groupedUsers[groupName].length}
-                                        </span>
-                                    </h3>
-                                    
-                                    <div class="relative group">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <svg class="h-4 w-4 text-gray-400 group-focus-within:text-pink-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                        </div>
-                                        <input type="text" 
-                                               placeholder="Search in ${groupName}..." 
-                                               onkeyup="filterTeamTable(this)" 
-                                               class="form-input text-sm py-2 pl-9 pr-4 rounded-xl border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500 shadow-sm transition-all w-48 focus:w-64"
-                                        >
-                                    </div>
-                                </div>
-
-                                <div class="shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+                                <h3 class="text-xl font-semibold text-gray-800 mb-4">${groupName}</h3>
+                                <div class="shadow-sm border border-gray-200 rounded-lg overflow-x-auto">
                                     <table class="bg-white divide-y divide-gray-200 table-fixed min-w-full">
                                         <thead class="bg-gray-50">
                                             <tr>
@@ -11367,30 +11355,6 @@ function initRolodexEffect(containerId) {
 
     container.removeEventListener('scroll', handleScroll);
     container.addEventListener('scroll', handleScroll);
-}
-
-// --- פונקציית חיפוש בטבלה (Client Side) ---
-window.filterTeamTable = function(input) {
-    const filter = input.value.toUpperCase();
-    // 1. מציאת הטבלה הספציפית ששייכת לאינפוט הזה
-    // (האינפוט והטבלה נמצאים בתוך אותו דיב עוטף עם קלאס mb-8)
-    const container = input.closest('.mb-8'); 
-    const rows = container.querySelectorAll('tbody tr'); // כל השורות בטבלה הספציפית הזו
-
-    // 2. מעבר על השורות והסתרה/הצגה
-    rows.forEach(row => {
-        // התא הראשון הוא תמיד שם העובד (מוגדר כ-sticky-col)
-        const nameCell = row.querySelector('td:first-child'); 
-        if (nameCell) {
-            const txtValue = nameCell.textContent || nameCell.innerText;
-            // אם הטקסט מכיל את מה שחיפשנו -> הצג, אחרת -> הסתר
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        }
-    });
 }
 
     </script>

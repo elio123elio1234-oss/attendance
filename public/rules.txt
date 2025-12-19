@@ -1,0 +1,204 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================================
+    // 🛡️ פונקציות עזר (Helpers) - המוח של האבטחה
+    // ==========================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getMyData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function myCompanyId() {
+      return getMyData().get('companyId', '');
+    }
+
+    function isManager() {
+      let data = getMyData();
+      return data.get('isTL', false) == true || data.get('isSuperAdmin', false) == true;
+    }
+
+    function existingDocInMyCompany() {
+      return resource.data.get('companyId', '') == myCompanyId();
+    }
+
+    function writingToMyCompany() {
+      return request.resource.data.companyId == myCompanyId();
+    }
+
+    // 🔥 פונקציית הברזל 1: בדיקה האם החברה חסומה בשרת 🔥
+    // תוקן: הכל בשורה אחת ללא משתנים
+    function isCompanyBlocked(companyId) {
+      return companyId != null && 
+             companyId != '' && 
+             exists(/databases/$(database)/documents/companies/$(companyId)) &&
+             get(/databases/$(database)/documents/companies/$(companyId)).data.get('isBlocked', false) == true;
+    }
+
+    // 🔥 פונקציית הברזל 2: בדיקה האם יש מקום בחברה 🔥
+    // תוקן: הוסר ה-if וה-let, הכל נדחס לביטוי אחד שמחזיר אמת/שקר
+    function hasUserQuota(companyId) {
+      return companyId != null && 
+             companyId != '' &&
+             exists(/databases/$(database)/documents/companies/$(companyId)) &&
+             get(/databases/$(database)/documents/companies/$(companyId)).data.get('currentUsersCount', 0) < 
+             get(/databases/$(database)/documents/companies/$(companyId)).data.get('maxUsers', 10);
+    }
+
+    // ==========================================================
+    // 1. משתמשים (Users)
+    // ==========================================================
+    match /users/{userId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        existingDocInMyCompany()
+      ) 
+      && (request.auth.uid == userId || !isCompanyBlocked(resource.data.get('companyId', '')));
+      
+      allow create: if isSignedIn() && (
+        request.auth.uid == userId || 
+        (
+          isManager() && 
+          writingToMyCompany() &&
+          !isCompanyBlocked(request.resource.data.companyId) &&
+          hasUserQuota(request.resource.data.companyId)
+        )
+      );
+      
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['companyId', 'isTL', 'isSuperAdmin'])) || 
+        (isManager() && existingDocInMyCompany() && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['companyId']) || writingToMyCompany()))
+      )
+      && !isCompanyBlocked(resource.data.get('companyId', ''));
+      
+      allow delete: if isSignedIn() && isManager() && existingDocInMyCompany() && !isCompanyBlocked(resource.data.get('companyId', ''));
+    }
+
+    // ==========================================================
+    // 2. נוכחות (Attendance)
+    // ==========================================================
+    match /attendance/{docId} {
+      // ✅ תיקון: מנהלים יכולים לקרוא הכל בלי תנאים מסובכים
+      allow read: if isSignedIn() && isManager();
+      
+      // ✅ עובדים רגילים יכולים לקרוא רק את שלהם (אם המסמך קיים)
+      allow read: if isSignedIn() && 
+                     resource != null && 
+                     resource.data.userId == request.auth.uid &&
+                     !isCompanyBlocked(resource.data.get('companyId', ''));
+
+      allow create: if isSignedIn() && (
+        (request.resource.data.userId == request.auth.uid && writingToMyCompany()) || 
+        (isManager() && writingToMyCompany())
+      )
+      && !isCompanyBlocked(request.resource.data.companyId);
+
+      allow update: if isSignedIn() && (
+        (request.resource.data.userId == request.auth.uid && existingDocInMyCompany()) || 
+        (isManager() && existingDocInMyCompany())
+      )
+      && !isCompanyBlocked(resource.data.get('companyId', ''));
+      
+      allow delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid) || 
+        (isManager() && existingDocInMyCompany())
+      )
+      && !isCompanyBlocked(resource.data.get('companyId', ''));
+    }
+
+    // ==========================================================
+    // 3. בקשות חופשה (Requests)
+    // ==========================================================
+    match /requests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        (isManager() && existingDocInMyCompany())
+      )
+      && !isCompanyBlocked(resource.data.get('companyId', ''));
+
+      allow create: if isSignedIn() && 
+                    request.resource.data.userId == request.auth.uid && 
+                    writingToMyCompany()
+                    && !isCompanyBlocked(request.resource.data.companyId);
+      
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        (isManager() && existingDocInMyCompany())
+      )
+      && !isCompanyBlocked(resource.data.get('companyId', ''));
+      
+      allow delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') || 
+        (isManager() && existingDocInMyCompany())
+      )
+      && !isCompanyBlocked(resource.data.get('companyId', ''));
+    }
+
+    // ==========================================================
+    // 4. משתמשים ממתינים (Pending Users)
+    // ==========================================================
+    match /pendingUsers/{docId} {
+      allow create: if true;
+      
+      allow read: if isSignedIn() && isManager() && existingDocInMyCompany() && !isCompanyBlocked(resource.data.get('companyId', ''));
+      
+      allow update, delete: if isSignedIn() && isManager() && existingDocInMyCompany() && !isCompanyBlocked(resource.data.get('companyId', ''));
+    }
+
+// ==========================================================
+    // 5. ניהול חברות (Companies) - תיקון לקריסת הוספת עובד
+    // ==========================================================
+    match /companies/{companyId} {
+      allow create: if isSignedIn();
+      
+      allow read: if isSignedIn() && (
+        resource.id == myCompanyId() || resource.data.adminUid == request.auth.uid
+      );
+
+      allow update: if isSignedIn() && (
+        resource.id == myCompanyId() || resource.data.adminUid == request.auth.uid
+      )
+      // 1. חסימה מוחלטת: אסור למשתמש לשנות את הסטטוסים הקריטיים האלו
+      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isBlocked', 'maxUsers'])
+      
+      // 2. לוגיקה למונה המשתמשים (currentUsersCount):
+      // אנחנו מאפשרים לעדכן אותו, אבל רק בצעדים של 1 (פלוס או מינוס)
+      // זה מונע מהמשתמש לאפס את המונה ל-0 בזדון
+      && (
+        // אפשרות א': לא נגעו במונה בכלל
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['currentUsersCount'])
+        ||
+        // אפשרות ב': נגעו במונה, אבל החישוב תקין (הוסיפו 1 או הורידו 1)
+        (
+          request.resource.data.get('currentUsersCount', 0) == resource.data.get('currentUsersCount', 0) + 1 ||
+          request.resource.data.get('currentUsersCount', 0) == resource.data.get('currentUsersCount', 0) - 1
+        )
+      );
+    }
+
+    // ==========================================================
+    // 6. קבצים ציבוריים (Public)
+    // ==========================================================
+    match /public_company_codes/{code} {
+      allow read: if true; 
+      allow create: if isSignedIn();
+      
+      allow update, delete: if isSignedIn() && isManager() && existingDocInMyCompany() && !isCompanyBlocked(resource.data.get('companyId', ''));
+    }
+    
+    match /public_company_names/{name} {
+      allow read: if true;
+      allow create: if isSignedIn();
+    }
+
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if false; 
+    }
+  }
+}
